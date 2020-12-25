@@ -1,0 +1,27 @@
+.article {
+  height: 400px !important;
+}
+
+body{
+  background: rgb(255,255,255);
+   
+ }
+
+#firstname{
+  box-shadow: 1px 1px #414040;
+}
+
+#lastname{
+  box-shadow: 1px 1px #414040;
+
+}
+
+/* #counter{
+  box-shadow: 1px 1px #414040;
+} */
+
+button{
+  box-shadow: 1px 1px #414040;
+}
+
+

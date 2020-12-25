@@ -1,0 +1,46 @@
+
+<div class="container">
+   <nav role="navigation">
+    <div class="my-4 text-center">
+      <h2>Customize Your News Feed</h2>
+      <p class="lead">Enter user information and select from the available categories before rendering your feed</p>
+      <hr class="m-auto">
+    </div>
+    <ul class="text-center list-inline">
+      {{#each nav}}
+      <li class="list-inline-item"><a href="{{link}}">{{title}}</a></li>
+      {{/each}}
+    </ul>
+   </nav>
+
+  <main class="mt-4 border border-light">
+    <div class="row g-3">
+      <div class="py-4 col-6 mx-auto">
+        <h4 class="mb-3">Enter New User Information or <a href='/auth/sign-in'>Sign In!</a></h4>
+        <form name="sigh-up-form" action="/auth/sign-up" method="post">
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label for="username" class="form-label">Username</label>
+              <input name="username" class="form-control" id="username"/>
+            </div>
+
+            <div class="col-sm-6">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" name="password" class="form-control" id="password"/>
+            </div>
+
+            <div class="col-sm-12 py-4 mx-auto">
+              <input type="submit" value="Continue" class="w-100 btn btn-outline-dark" id="submit-sign-up"/>
+            </div>
+          </div> 
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="my-5 pt-5 text-muted text-center text-small">
+    <hr>
+    <p class="mb-1">&copy; NewsApp</p>
+  </footer>
+</div>

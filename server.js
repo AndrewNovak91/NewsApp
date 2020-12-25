@@ -1,5 +1,3 @@
-// Server.js - This file is the initial starting point for the Node/Express server.
-
 // Dependencies
 // =============================================================
 const express = require('express');
@@ -8,6 +6,9 @@ const debug = require('debug')('app');
 const morgan = require('morgan');
 const path = require('path');
 const exphbs = require('express-handlebars');
+const passport = require('passport');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
 
 // Sets up the Express App
 // =============================================================
@@ -17,44 +18,112 @@ const app = express();
 // Sets up Morgan tool
 app.use(morgan('tiny'));
 
-// Sets up the Express app to handle data parsing
-app.use(express.urlencoded({ extended: true }));
+// Sets up the Express app to handle data parsing and cookie parsing
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // changed to false
+app.use(cookieParser());
+app.use(session({ secret: 'news' }));
+
+require('./config/passport.js')(app);
+
+// Sets up template engine and defaultLayout
+// app.set('views', path.join(__dirname, 'views/layouts/'));
+app.engine('handlebars', exphbs({ defaultLayout: 'main' }));
+app.set('view engine', 'handlebars');
 
 // Sets up the Express app to establish a static directory to access static files
 app.use(express.static(path.join(__dirname, '/public/')));
 
-// Serve HTML file for test purposes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '/views/', '/index.html'));
-});
-
-// Serve the corresponding node_modules folder if file is not found in public
-// Allows work offline without reliance on CDN
+// // Serve the corresponding node_modules folder if file is not found in public
+// // Allows work offline without reliance on CDN
 app.use('/css', express.static(path.join(__dirname, '/node_modules/bootstrap/dist/css')));
 app.use('/js', express.static(path.join(__dirname, '/node_modules/bootstrap/dist/js')));
 app.use('/js', express.static(path.join(__dirname, '/node_modules/jquery/dist')));
 
-// Sets up template engine and defaultLayout
-app.engine('handlebars', exphbs({ defaultLayout: 'main' }));
-app.set('view engine', 'handlebars');
-app.set('views', __dirname, '/views');
-
 // Requiring our models for syncing
 const db = require('./models');
 
+const nav = [
+  {
+    link: '/articles/business',
+    title: 'Business'
+  },
+  {
+    link: '/articles/entertainment',
+    title: 'Entertainment'
+  },
+  {
+    link: '/articles/general',
+    title: 'General',
+  },
+  {
+    link: '/articles/health',
+    title: 'Health'
+  },
+  {
+    link: '/articles/science',
+    title: 'Science'
+  },
+  {
+    link: '/articles/sports',
+    title: 'Sports'
+  },
+  {
+    link: '/articles/technology',
+    title: 'Technology'
+  }
+];
+
 // Routes
 // =============================================================
-// require('./controllers/users_controller.js')(app);
+const authRouter = require('./routes/auth-routes')(nav);
+const indexRouter = require('./routes/index-routes')(nav);
+const articleRouter = require('./routes/article-routes')(nav);
+const adminRouter = require('./routes/admin-routes')(nav);
 
-// Syncing our sequelize models and then starting our Express app
+app.use('/auth', authRouter);
+app.use('/admin', adminRouter);
+app.use('/articles', articleRouter);
+app.use('/', indexRouter);
+
+// Addn'l Middleware (something that is executed when everything comes in...)
 // =============================================================
-db.sequelize.sync({ force: true }).then(function() {
-  app.listen(PORT, function() {
-    console.log(`App listening on PORT ' + ${PORT}`);
+app.use((req, res, next) => {
+  const err = new Error('Page Not Found!');
+  err.status = 404;
+  next(err);
+});
+app.use((err, req, res, next) => {
+  // assign error status to the error that has been passed from the above middleware
+  // or if the error originated in another portion of app, assign 500 (Internal Server Error) status
+  res.status(err.status || 500);
+  res.json({
+    err: {
+      message: err.message
+    }
   });
 });
 
-// app.listen(PORT, () => {
-//   debug(`listening on PORT ${chalk.green(PORT)}`);
-// });
+// Syncing our sequelize models and then starting our Express app
+// =============================================================
+db.sequelize
+  .sync({ force: true })
+  .then(() => {
+    db.Category.bulkCreate([
+      { category: 'Business' },
+      { category: 'Entertainment' },
+      { category: 'General' },
+      { category: 'Health' },
+      { category: 'Science' },
+      { category: 'Sports' },
+      { category: 'Technology' }
+    ]);
+  })
+  .then(() => {
+    app.listen(PORT, () => {
+      debug(`listening on PORT ${chalk.green(PORT)}`);
+    });
+  })
+  .catch((err) => {
+    debug(err);
+  });
